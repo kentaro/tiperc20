@@ -51,6 +51,8 @@ Loop:
 			case *slack.InvalidAuthEvent:
 				fmt.Printf("Invalid credentials")
 				break Loop
+			case *slack.ReactionAddedEvent:
+				handleReaction(ev)
 			default:
 				fmt.Printf("Unknown error")
 			}
@@ -75,7 +77,7 @@ func handleMessage(ev *slack.MessageEvent) {
 	}
 }
 
-func handleTipCommand(userId string) {
+func sendTokenTo(userId string) {
 	conn, err := ethclient.Dial("https://ropsten.infura.io/" + infuraAccessToken)
 	if err != nil {
 		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
@@ -99,6 +101,18 @@ func handleTipCommand(userId string) {
 		}
 		fmt.Printf("Transfer pending: 0x%x\n", tx.Hash())
 	}
+}
+
+func handleReaction(ev *slack.ReactionAddedEvent) {
+	if ev.Reaction != "hi-ether" {
+		return
+	}
+
+	sendTokenTo(ev.ItemUser)
+}
+
+func handleTipCommand(userId string) {
+	sendTokenTo(userId)
 }
 
 func handleRegister(userId string, address string) {
