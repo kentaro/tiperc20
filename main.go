@@ -30,7 +30,6 @@ var ethApiEndpoint string
 var ethKeyJson string
 var ethPassword string
 
-var httpdHost string
 var httpdPort int
 
 var cmdRegex = regexp.MustCompile("^<@[^>]+> ([^<]+) (?:<@)?([^ <>]+)(?:>)?")
@@ -44,15 +43,17 @@ func init() {
 	ethKeyJson = os.Getenv("ETH_KEY_JSON")
 	ethPassword = os.Getenv("ETH_PASSWORD")
 
-	flag.StringVar(&httpdHost, "host", "0.0.0.0", "host")
-	flag.IntVar(&httpdPort, "port", 20000, "port number")
+	flag.IntVar(&httpdPort, "port", 20020, "port number")
 }
 
 func main() {
+	flag.Parse()
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "TipERC20: https://github.com/kentaro/tiperc20")
 	})
-	go http.ListenAndServe(fmt.Sprintf("%s:%d", httpdHost, httpdPort), nil)
+	log.Println(httpdPort)
+	go log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", httpdPort), nil))
 
 	api := slack.New(slackBotToken)
 	rtm := api.NewRTM()
