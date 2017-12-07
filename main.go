@@ -7,10 +7,12 @@ import (
 	"math/big"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nlopes/slack"
 
@@ -19,6 +21,8 @@ import (
 
 var slackBotId string
 var slackBotToken string
+var slackTipReaction string
+var slackTipAmount string
 var tokenAddress string
 var infuraAccessToken string
 var ropstenKeyJson string
@@ -28,6 +32,8 @@ var cmdRegex = regexp.MustCompile("^<@[^>]+> ([^<]+) (?:<@)?([^ <>]+)(?:>)?")
 
 func init() {
 	slackBotToken = os.Getenv("SLACK_BOT_TOKEN")
+	slackTipReaction = os.Getenv("SLACK_TIP_REACTION")
+	slackTipAmount = os.Getenv("SLACK_TIP_AMOUNT")
 	tokenAddress = os.Getenv("TIPERC20_TOKEN_ADDRESS")
 	infuraAccessToken = os.Getenv("INFURA_ACCESS_TOKEN")
 	ropstenKeyJson = os.Getenv("ROPSTEN_KEY_JSON")
@@ -71,7 +77,7 @@ func handleMessage(api *slack.Client, ev *slack.MessageEvent) {
 	fmt.Println(matched)
 	switch matched[1] {
 	case "tip":
-		handleTipCommand(api, matched[2])
+		handleTipCommand(api, ev, matched[2])
 	case "register":
 		handleRegister(api, ev, matched[2])
 	default:
@@ -80,15 +86,42 @@ func handleMessage(api *slack.Client, ev *slack.MessageEvent) {
 }
 
 func handleReaction(api *slack.Client, ev *slack.ReactionAddedEvent) {
-	if ev.Reaction != "hi-ether" {
+	if ev.Reaction != slackTipReaction {
 		return
 	}
 
-	sendTokenTo(api, ev.ItemUser)
+	address := retrieveAddressFor(ev.ItemUser)
+	if address == "" {
+		sendSlackMessage(api, ev.ItemUser, `
+:question: Please register your Ethereum address:
+
+> @tiperc20 register YOUR_ADDRESS
+		`)
+	} else {
+		tx, err := sendTokenTo(address)
+		if err == nil {
+			sendSlackMessage(api, ev.ItemUser, ":+1: You got a token at "+tx.Hash().String())
+		}
+	}
 }
 
-func handleTipCommand(api *slack.Client, userId string) {
-	sendTokenTo(api, userId)
+func handleTipCommand(api *slack.Client, ev *slack.MessageEvent, userID string) {
+	address := retrieveAddressFor(userID)
+
+	if address == "" {
+		sendSlackMessage(api, userID, `
+:question: Please register your Ethereum address:
+
+> @tiperc20 register YOUR_ADDRESS
+		`)
+	} else {
+		tx, err := sendTokenTo(address)
+		if err != nil {
+			sendSlackMessage(api, ev.Channel, ":x: "+err.Error())
+		} else {
+			sendSlackMessage(api, userID, ":+1: You got a token at "+tx.Hash().String())
+		}
+	}
 }
 
 func handleRegister(api *slack.Client, ev *slack.MessageEvent, address string) {
@@ -110,36 +143,45 @@ func handleRegister(api *slack.Client, ev *slack.MessageEvent, address string) {
 	}
 }
 
-func sendTokenTo(api *slack.Client, userId string) {
+func sendTokenTo(address string) (tx *types.Transaction, err error) {
 	conn, err := ethclient.Dial("https://ropsten.infura.io/" + infuraAccessToken)
 	if err != nil {
-		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
+		log.Printf("Failed to instantiate a Token contract: %v", err)
+		return
 	}
 
 	token, err := NewToken(common.HexToAddress(tokenAddress), conn)
 	if err != nil {
-		log.Fatalf("Failed to instantiate a Token contract: %v", err)
+		log.Printf("Failed to instantiate a Token contract: %v", err)
+		return
 	}
 
 	auth, err := bind.NewTransactor(strings.NewReader(ropstenKeyJson), ropstenPassword)
 	if err != nil {
-		log.Fatalf("Failed to create authorized transactor: %v", err)
+		log.Printf("Failed to create authorized transactor: %v", err)
+		return
 	}
 
-	toAddress := retrieveAddressFor(userId)
-	if toAddress != "" {
-		tx, err := token.Transfer(auth, common.HexToAddress(toAddress), big.NewInt(1000000000000000000))
-		if err != nil {
-			log.Fatalf("Failed to request token transfer: %v", err)
-		}
-		fmt.Printf("Transfer pending: 0x%x\n", tx.Hash())
+	amount, err := strconv.ParseInt(slackTipAmount, 10, 64)
+	if err != nil {
+		log.Printf("Invalid tip amount: %v", err)
+		return
 	}
+
+	tx, err = token.Transfer(auth, common.HexToAddress(address), big.NewInt(amount))
+	if err != nil {
+		log.Printf("Failed to request token transfer: %v", err)
+		return
+	}
+
+	log.Printf("Transfer pending: 0x%x\n", tx.Hash())
+	return
 }
 
 func sendSlackMessage(api *slack.Client, channel, message string) {
 	_, _, err := api.PostMessage(channel, message, slack.PostMessageParameters{})
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 }
 
@@ -147,12 +189,9 @@ func retrieveAddressFor(userId string) (address string) {
 	db, _ := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	defer db.Close()
 
-	err := db.QueryRow(`
+	db.QueryRow(`
 		SELECT ethereum_address FROM accounts WHERE slack_user_id = $1 LIMIT 1;
 	`, userId).Scan(&address)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	return
 }
