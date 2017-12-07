@@ -47,14 +47,14 @@ Loop:
 			case *slack.ConnectedEvent:
 				slackBotId = ev.Info.User.ID
 			case *slack.MessageEvent:
-				handleMessage(ev)
+				handleMessage(api, ev)
 			case *slack.RTMError:
 				fmt.Printf("Error: %s\n", ev.Error())
 			case *slack.InvalidAuthEvent:
 				fmt.Printf("Invalid credentials")
 				break Loop
 			case *slack.ReactionAddedEvent:
-				handleReaction(ev)
+				handleReaction(api, ev)
 			default:
 				// Ignore unknown errors because it's emitted too much time
 			}
@@ -62,7 +62,7 @@ Loop:
 	}
 }
 
-func handleMessage(ev *slack.MessageEvent) {
+func handleMessage(api *slack.Client, ev *slack.MessageEvent) {
 	if !strings.HasPrefix(ev.Text, "<@"+slackBotId+">") {
 		return
 	}
@@ -71,27 +71,29 @@ func handleMessage(ev *slack.MessageEvent) {
 	fmt.Println(matched)
 	switch matched[1] {
 	case "tip":
-		handleTipCommand(matched[2])
+		handleTipCommand(api, matched[2])
 	case "register":
-		handleRegister(ev.User, matched[2])
+		handleRegister(api, ev, matched[2])
 	default:
 		fmt.Printf("Unknown command")
 	}
 }
 
-func handleReaction(ev *slack.ReactionAddedEvent) {
+func handleReaction(api *slack.Client, ev *slack.ReactionAddedEvent) {
 	if ev.Reaction != "hi-ether" {
 		return
 	}
 
-	sendTokenTo(ev.ItemUser)
+	sendTokenTo(api, ev.ItemUser)
 }
 
-func handleTipCommand(userId string) {
-	sendTokenTo(userId)
+func handleTipCommand(api *slack.Client, userId string) {
+	sendTokenTo(api, userId)
 }
 
-func handleRegister(userId string, address string) {
+func handleRegister(api *slack.Client, ev *slack.MessageEvent, address string) {
+	userId := ev.User
+
 	db, _ := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	defer db.Close()
 
@@ -102,11 +104,13 @@ func handleRegister(userId string, address string) {
 	`, userId, address)
 
 	if err != nil {
-		log.Fatal(err)
+		sendSlackMessage(api, ev.Channel, ":x: "+err.Error())
+	} else {
+		sendSlackMessage(api, ev.Channel, ":o: Registered `"+address+"`")
 	}
 }
 
-func sendTokenTo(userId string) {
+func sendTokenTo(api *slack.Client, userId string) {
 	conn, err := ethclient.Dial("https://ropsten.infura.io/" + infuraAccessToken)
 	if err != nil {
 		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
@@ -129,6 +133,13 @@ func sendTokenTo(userId string) {
 			log.Fatalf("Failed to request token transfer: %v", err)
 		}
 		fmt.Printf("Transfer pending: 0x%x\n", tx.Hash())
+	}
+}
+
+func sendSlackMessage(api *slack.Client, channel, message string) {
+	_, _, err := api.PostMessage(channel, message, slack.PostMessageParameters{})
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 
