@@ -2,9 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"math/big"
+	"net/http"
 	"os"
 	"regexp"
 	"strconv"
@@ -28,6 +30,9 @@ var infuraAccessToken string
 var ropstenKeyJson string
 var ropstenPassword string
 
+var httpdHost string
+var httpdPort int
+
 var cmdRegex = regexp.MustCompile("^<@[^>]+> ([^<]+) (?:<@)?([^ <>]+)(?:>)?")
 
 func init() {
@@ -38,9 +43,17 @@ func init() {
 	infuraAccessToken = os.Getenv("INFURA_ACCESS_TOKEN")
 	ropstenKeyJson = os.Getenv("ROPSTEN_KEY_JSON")
 	ropstenPassword = os.Getenv("ROPSTEN_PASSWORD")
+
+	flag.StringVar(&httpdHost, "host", "0.0.0.0", "host")
+	flag.IntVar(&httpdPort, "port", 20000, "port number")
 }
 
 func main() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "TipERC20: https://github.com/kentaro/tiperc20")
+	})
+	go http.ListenAndServe(fmt.Sprintf("%s:%d", httpdHost, httpdPort), nil)
+
 	api := slack.New(slackBotToken)
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
