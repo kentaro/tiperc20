@@ -52,8 +52,9 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "TipERC20: https://github.com/kentaro/tiperc20")
 	})
-	log.Println(httpdPort)
-	go log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", httpdPort), nil))
+	go func() {
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", httpdPort), nil))
+	}()
 
 	api := slack.New(slackBotToken)
 	rtm := api.NewRTM()
