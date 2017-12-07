@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"math/big"
@@ -12,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nlopes/slack"
+
+	_ "github.com/lib/pq"
 )
 
 var slackBotId string
@@ -22,7 +25,6 @@ var ropstenKeyJson string
 var ropstenPassword string
 
 var cmdRegex = regexp.MustCompile("^<@[^>]+> ([^<]+) (?:<@)?([^ <>]+)(?:>)?")
-var accounts = make(map[string]string)
 
 func init() {
 	slackBotToken = os.Getenv("SLACK_BOT_TOKEN")
@@ -54,7 +56,7 @@ Loop:
 			case *slack.ReactionAddedEvent:
 				handleReaction(ev)
 			default:
-				fmt.Printf("Unknown error")
+				// Ignore unknown errors because it's emitted too much time
 			}
 		}
 	}
@@ -74,6 +76,33 @@ func handleMessage(ev *slack.MessageEvent) {
 		handleRegister(ev.User, matched[2])
 	default:
 		fmt.Printf("Unknown command")
+	}
+}
+
+func handleReaction(ev *slack.ReactionAddedEvent) {
+	if ev.Reaction != "hi-ether" {
+		return
+	}
+
+	sendTokenTo(ev.ItemUser)
+}
+
+func handleTipCommand(userId string) {
+	sendTokenTo(userId)
+}
+
+func handleRegister(userId string, address string) {
+	db, _ := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	defer db.Close()
+
+	_, err := db.Exec(`
+		INSERT INTO accounts(slack_user_id, ethereum_address) VALUES ($1, $2)
+		ON CONFLICT ON CONSTRAINT accounts_slack_user_id_key
+		DO UPDATE SET ethereum_address=$2;
+	`, userId, address)
+
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -103,23 +132,16 @@ func sendTokenTo(userId string) {
 	}
 }
 
-func handleReaction(ev *slack.ReactionAddedEvent) {
-	if ev.Reaction != "hi-ether" {
-		return
+func retrieveAddressFor(userId string) (address string) {
+	db, _ := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	defer db.Close()
+
+	err := db.QueryRow(`
+		SELECT ethereum_address FROM accounts WHERE slack_user_id = $1 LIMIT 1;
+	`, userId).Scan(&address)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	sendTokenTo(ev.ItemUser)
-}
-
-func handleTipCommand(userId string) {
-	sendTokenTo(userId)
-}
-
-func handleRegister(userId string, address string) {
-	accounts[userId] = address
-}
-
-func retrieveAddressFor(userId string) (address string) {
-	address = accounts[userId]
 	return
 }
