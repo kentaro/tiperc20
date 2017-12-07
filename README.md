@@ -1,6 +1,6 @@
 # tiperc20
 
-tiperc20 is a software that behaves as a Slack bot. It handles some form of messages and some kind of reactions, and be able to send arbitrary ERC20 tokens to whom the messages or reactions are sent.
+tiperc20 is a software that behaves as a Slack bot. It handles some form of messages and some kind of reactions, and is able to send arbitrary ERC20 tokens to whom the messages or reactions are sent.
 
 This software is heavily inspired by [tipmona](https://twitter.com/tipmona) and [OKIMOCHI](https://github.com/campfire-inc/OKIMOCHI/).
 
