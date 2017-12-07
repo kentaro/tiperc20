@@ -2,7 +2,28 @@
 
 tiperc20 is a software that behaves as a Slack bot. It handles some form of messages and some kind of reactions, and send ERC20 token to whom the messages or reactions are sent.
 
-## Settings
+This software is heavily inspired by [tipmona](https://twitter.com/tipmona).
+
+## Usage
+
+### Register Ethereum Account Address
+
+To receive ERC20 token, you have to register your account address on a certain Ethereum network in advance as below:
+
+```
+@tiperc register <YOUR_ETH_ACCOUNT_ADDRESS>
+```
+
+### Send ERC20 Token
+
+There are 2 ways to send ERC20 token to someone. 
+
+1. `@tiperc tip @some_slack_account_name`
+2. Add a reaction to someone's message
+
+## Run Your Own tiperc20 Instance
+
+### Settings
 
 tiperc20 requires the environment variables below set:
 
@@ -16,7 +37,7 @@ tiperc20 requires the environment variables below set:
 * `ETH_KEY_JSON`: JSON string of your account stored in keystore
 * `ETH_PASSWORD`: Password for your account on a certain Ethereum network
 
-### How to Generate Keystore JSON from a Private Key
+#### How to Generate Keystore JSON from a Private Key
 
 If you have only a private key, for instance, exported via MetaMask extension for Chrome, you can generate keystore JSON string as below:
 
@@ -31,8 +52,6 @@ $ cat ~/Library/Ethereum/keystore/UTC--XXXXXXXXXXXXXXXX--XXXXXXXXXXXXXXXX | pbco
 ```
 
 Use the string in clipboard as `ETH_KEY_JSON`.
-
-## Run Your Own tiperc20 Instance
 
 ### On Your Local Machine
 
