@@ -26,9 +26,9 @@ var slackBotToken string
 var slackTipReaction string
 var slackTipAmount string
 var tokenAddress string
-var infuraAccessToken string
-var ropstenKeyJson string
-var ropstenPassword string
+var ethApiEndpoint string
+var ethKeyJson string
+var ethPassword string
 
 var httpdHost string
 var httpdPort int
@@ -40,9 +40,9 @@ func init() {
 	slackTipReaction = os.Getenv("SLACK_TIP_REACTION")
 	slackTipAmount = os.Getenv("SLACK_TIP_AMOUNT")
 	tokenAddress = os.Getenv("TIPERC20_TOKEN_ADDRESS")
-	infuraAccessToken = os.Getenv("INFURA_ACCESS_TOKEN")
-	ropstenKeyJson = os.Getenv("ROPSTEN_KEY_JSON")
-	ropstenPassword = os.Getenv("ROPSTEN_PASSWORD")
+	ethApiEndpoint = os.Getenv("ETH_API_ENDPOINT")
+	ethKeyJson = os.Getenv("ETH_KEY_JSON")
+	ethPassword = os.Getenv("ETH_PASSWORD")
 
 	flag.StringVar(&httpdHost, "host", "0.0.0.0", "host")
 	flag.IntVar(&httpdPort, "port", 20000, "port number")
@@ -157,7 +157,7 @@ func handleRegister(api *slack.Client, ev *slack.MessageEvent, address string) {
 }
 
 func sendTokenTo(address string) (tx *types.Transaction, err error) {
-	conn, err := ethclient.Dial("https://ropsten.infura.io/" + infuraAccessToken)
+	conn, err := ethclient.Dial(ethApiEndpoint)
 	if err != nil {
 		log.Printf("Failed to instantiate a Token contract: %v", err)
 		return
@@ -169,7 +169,7 @@ func sendTokenTo(address string) (tx *types.Transaction, err error) {
 		return
 	}
 
-	auth, err := bind.NewTransactor(strings.NewReader(ropstenKeyJson), ropstenPassword)
+	auth, err := bind.NewTransactor(strings.NewReader(ethKeyJson), ethPassword)
 	if err != nil {
 		log.Printf("Failed to create authorized transactor: %v", err)
 		return
