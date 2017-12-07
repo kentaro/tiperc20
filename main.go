@@ -198,13 +198,13 @@ func sendSlackMessage(api *slack.Client, channel, message string) {
 	}
 }
 
-func retrieveAddressFor(userId string) (address string) {
+func retrieveAddressFor(userID string) (address string) {
 	db, _ := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	defer db.Close()
 
 	db.QueryRow(`
 		SELECT ethereum_address FROM accounts WHERE slack_user_id = $1 LIMIT 1;
-	`, userId).Scan(&address)
+	`, userID).Scan(&address)
 
 	return
 }
