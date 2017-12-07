@@ -26,6 +26,12 @@
   version = "v1.7.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/lib/pq"
+  packages = [".","oid"]
+  revision = "83612a56d3dd153a94a629cd64925371c9adad78"
+
+[[projects]]
   name = "github.com/nlopes/slack"
   packages = ["."]
   revision = "c86337c0ef2486a15edd804355d9c73d2f2caed1"
@@ -36,6 +42,12 @@
   packages = ["."]
   revision = "e790cca94e6cc75c7064b1332e63811d4aae1a53"
   version = "v1.1"
+
+[[projects]]
+  name = "github.com/pressly/goose"
+  packages = ["."]
+  revision = "056a4d47dcc4d67fa3947a4f13945a5c690e568b"
+  version = "v2.1.0"
 
 [[projects]]
   branch = "master"
@@ -100,6 +112,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0f05fea5fd9eb12aec4bef668626a9840825a5b207fc0e8a2affbd9a0b07e816"
+  inputs-digest = "e598c1cbd39399a543abb92894c7c2a08e0c7538c0f3b6b5fe0237b0224055d8"
   solver-name = "gps-cdcl"
   solver-version = 1

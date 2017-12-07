@@ -19,6 +19,11 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+[metadata.heroku]
+  root-package = "github.com/kentaro/tiperc20"
+  go-version = "go1.9.1"
+  install = [ ".", "./cmd/..." ]
+  ensure = "true"
 
 [[constraint]]
   name = "github.com/ethereum/go-ethereum"
@@ -27,3 +32,11 @@
 [[constraint]]
   name = "github.com/nlopes/slack"
   version = "0.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/lib/pq"
+
+[[constraint]]
+  name = "github.com/pressly/goose"
+  version = "2.1.0"
