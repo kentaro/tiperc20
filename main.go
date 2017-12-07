@@ -50,7 +50,7 @@ func main() {
 	flag.Parse()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "TipERC20: https://github.com/kentaro/tiperc20")
+		fmt.Fprintf(w, "tiperc20: https://github.com/kentaro/tiperc20")
 	})
 	go func() {
 		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", httpdPort), nil))
