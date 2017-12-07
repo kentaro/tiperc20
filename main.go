@@ -39,7 +39,7 @@ func init() {
 	slackBotToken = os.Getenv("SLACK_BOT_TOKEN")
 	slackTipReaction = os.Getenv("SLACK_TIP_REACTION")
 	slackTipAmount = os.Getenv("SLACK_TIP_AMOUNT")
-	tokenAddress = os.Getenv("TIPERC20_TOKEN_ADDRESS")
+	tokenAddress = os.Getenv("ERC20_TOKEN_ADDRESS")
 	ethApiEndpoint = os.Getenv("ETH_API_ENDPOINT")
 	ethKeyJson = os.Getenv("ETH_KEY_JSON")
 	ethPassword = os.Getenv("ETH_PASSWORD")
