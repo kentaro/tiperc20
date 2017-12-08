@@ -11,14 +11,14 @@ This software is heavily inspired by [tipmona](https://twitter.com/tipmona) and 
 To receive ERC20 token, you have to register your account address on a certain Ethereum network in advance as below:
 
 ```
-@tiperc register <YOUR_ETH_ACCOUNT_ADDRESS>
+@tiperc20 register <YOUR_ETH_ACCOUNT_ADDRESS>
 ```
 
 ### Send ERC20 Token
 
 There are 2 ways to send ERC20 token to someone. 
 
-1. `@tiperc tip @some_slack_account_name`
+1. `@tiperc20 tip @some_slack_account_name`
 2. Add a reaction to someone's message
 
 ## Run Your Own tiperc20 Instance
