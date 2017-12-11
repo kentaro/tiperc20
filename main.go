@@ -115,7 +115,8 @@ func handleReaction(api *slack.Client, ev *slack.ReactionAddedEvent) {
 	} else {
 		tx, err := sendTokenTo(address)
 		if err == nil {
-			message := fmt.Sprintf(":+1: You got a token from @%s at %x", ev.ItemUser, tx.Hash())
+			user, _ := api.GetUserInfo(ev.ItemUser)
+			message := fmt.Sprintf(":+1: You got a token from @%s at %x", user.Name, tx.Hash())
 			sendSlackMessage(api, ev.ItemUser, message)
 		}
 	}
@@ -135,7 +136,8 @@ func handleTipCommand(api *slack.Client, ev *slack.MessageEvent, userID string) 
 		if err != nil {
 			sendSlackMessage(api, ev.Channel, ":x: "+err.Error())
 		} else {
-			message := fmt.Sprintf(":+1: You got a token from @%s at %x", ev.User, tx.Hash())
+			user, _ := api.GetUserInfo(ev.User)
+			message := fmt.Sprintf(":+1: You got a token from @%s at %x", user.Name, tx.Hash())
 			sendSlackMessage(api, userID, message)
 		}
 	}
