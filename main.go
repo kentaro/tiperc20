@@ -115,7 +115,7 @@ func handleReaction(api *slack.Client, ev *slack.ReactionAddedEvent) {
 	} else {
 		tx, err := sendTokenTo(address)
 		if err == nil {
-			user, _ := api.GetUserInfo(ev.ItemUser)
+			user, _ := api.GetUserInfo(ev.User)
 			message := fmt.Sprintf(":+1: You got a token from @%s at %x", user.Profile.RealName, tx.Hash())
 			sendSlackMessage(api, ev.ItemUser, message)
 		}
