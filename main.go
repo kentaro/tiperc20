@@ -89,6 +89,10 @@ func handleMessage(api *slack.Client, ev *slack.MessageEvent) {
 	}
 
 	matched := cmdRegex.FindStringSubmatch(ev.Text)
+	if len(matched) == 0 {
+		fmt.Printf("Unknown command")
+		return
+	}
 	fmt.Println(matched)
 	switch matched[1] {
 	case "tip":
